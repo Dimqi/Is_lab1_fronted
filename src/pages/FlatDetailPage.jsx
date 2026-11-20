@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Tag, Button, Spin, Result, Space, Typography, message, Popconfirm } from 'antd';
 import { ArrowLeftOutlined, HomeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { UpdateFlatModal } from '../components/UpdateFlatModal';
-import api from '../api/axios.js'; // 1. Импортируем ваш Axios клиент
+import api from '../api/axios.js';
+import {useWebSocket} from "../hooks/useWebSocket.js";
 
 const { Title } = Typography;
 
@@ -23,7 +24,7 @@ export const FlatDetailPage = () => {
             setLoading(true);
             try {
                 const response = await api.get(`/flat/${id}`);
-                setFlat(response.data); // Записываем реальный DTO с бэкенда
+                setFlat(response.data);
             } catch (error) {
                 message.error('Не удалось загрузить данные о квартире');
             } finally {
@@ -39,9 +40,9 @@ export const FlatDetailPage = () => {
     const handleUpdateSubmit = async (updatedFields) => {
         setSubmitting(true);
         try {
-            const response = await api.put(`/flat/${flat.id}`, updatedFields);
+            const response = await api.patch(`/flat/${flat.id}`, updatedFields);
 
-            const updatedData = response.data || { ...flat, ...updatedFields };
+            const updatedData = response.data;
             setFlat(updatedData);
 
             message.success('Данные квартиры успешно обновлены!');
@@ -65,6 +66,23 @@ export const FlatDetailPage = () => {
             setDeleteLoading(false);
         }
     };
+
+    useWebSocket((event) => {
+        const { entityType, action, id: eventId, payload } = event;
+
+        if (entityType === 'FLAT' && Number(eventId) === Number(id)) {
+            if (action === 'UPDATE') {
+                setFlat(payload);
+                message.info(`Квартира "${payload.name}" была обновлена`);
+            }
+            else if (action === 'DELETE') {
+                message.error('Эта квартира была удалена');
+                navigate('/main');
+            }
+        }
+
+    });
+
 
     if (loading) {
         return (

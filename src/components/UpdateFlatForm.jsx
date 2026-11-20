@@ -20,19 +20,16 @@ const FURNISH_OPTIONS = [
 ];
 
 const VIEW_OPTIONS = [
-    { label: 'Улица', value: 'STREET' },
     { label: 'Парк', value: 'YARD' },
     { label: 'Во двор', value: 'PARK' },
     { label: 'Площадка', value: 'BAD' },
-    { label: 'Хороший вид', value: 'GOOD' }
+    { label: 'Хороший вид', value: 'NORMAL' }
 ];
 
 const TRANSPORT_OPTIONS = [
-    { label: 'Мало', value: 'FEW' },
-    { label: 'Достаточно', value: 'NONE' },
-    { label: 'Много', value: 'LITTLE' },
-    { label: 'В достатке', value: 'NORMAL' },
-    { label: 'Отлично', value: 'ENOUGH' }
+    { label: 'Немного', value: 'LITTLE' },
+    { label: 'Нормально', value: 'NORMAL' },
+    { label: 'Достаточно', value: 'ENOUGH' }
 ];
 
 export const UpdateFlatForm = ({ initialData, onSubmit, loading = false }) => {
@@ -50,10 +47,6 @@ export const UpdateFlatForm = ({ initialData, onSubmit, loading = false }) => {
     const handleFinish = (values) => {
         const payload = {
             name: values.name,
-            coordinates: {
-                x: values.coordinates?.x,
-                y: values.coordinates?.y,
-            },
             area: values.area,
             price: values.price,
             balcony: values.balcony ?? false,
@@ -89,31 +82,8 @@ export const UpdateFlatForm = ({ initialData, onSubmit, loading = false }) => {
                     <Input placeholder="Например: Двушка на Ленина" />
                 </Form.Item>
 
-                {/* 2. Координаты (CoordinatesDto) */}
-                <Card size="small" title="Координаты объекта" style={{ marginBottom: 24, backgroundColor: '#fafafa' }}>
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Координата X"
-                                name={['coordinates', 'x']}
-                                rules={[{ required: true, message: 'Координаты обязательны' }]}
-                            >
-                                <InputNumber style={{ width: '100%' }} placeholder="X" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Координата Y"
-                                name={['coordinates', 'y']}
-                                rules={[{ required: true, message: 'Координаты обязательны' }]}
-                            >
-                                <InputNumber style={{ width: '100%' }} placeholder="Y" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                </Card>
 
-                {/* 3. Площадь и Цена */}
+
                 <Row gutter={16}>
                     <Col span={12}>
                         <Form.Item
@@ -130,7 +100,7 @@ export const UpdateFlatForm = ({ initialData, onSubmit, loading = false }) => {
                     </Col>
                     <Col span={12}>
                         <Form.Item
-                            label="Цена ($)"
+                            label="Цена"
                             name="price"
                             rules={[
                                 { required: true, message: 'Укажите цену' },
@@ -199,7 +169,6 @@ export const UpdateFlatForm = ({ initialData, onSubmit, loading = false }) => {
                     </Col>
                 </Row>
 
-                {/* 6. ID Дома и Балкон */}
                 <Row gutter={16} align="middle">
                     <Col span={16}>
                         <Form.Item label="ID Дома (House)" name="houseId">
@@ -218,7 +187,7 @@ export const UpdateFlatForm = ({ initialData, onSubmit, loading = false }) => {
                 <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
                     <Space>
                         <Button type="primary" htmlType="submit" loading={loading}>
-                            Сохранить изменения
+                            Сохранить
                         </Button>
                     </Space>
                 </Form.Item>

@@ -1,121 +1,89 @@
-import React, {useEffect, useState} from 'react';
-import { message } from 'antd';
-import { FlatsTable } from '../components/FlatsTable';
+import React, { useState, useCallback } from 'react';
+import { Button } from 'antd';
+import { PlusOutlined, ClearOutlined } from '@ant-design/icons';
+import { FlatsTable } from '../components/flats/FlatsTable.jsx';
 import { UpdateFlatModal } from '../components/UpdateFlatModal';
-import {FlatsHeader} from "../components/FlatsHeader.jsx";
-import api from "../api/axios.js";
-
+import { useEntityTable } from '../hooks/useEntityTable';
 
 export const DashboardPage = () => {
-    const [flats, setFlats] = useState([]); // Твой массив кратких объектов квартир
+    const flatMapper = useCallback(({
+                                        id, name, creationDate, area, price, balcony,
+                                        timeToMetroOnFoot, numberOfRooms, furnish, view, transport, houseId
+                                    }) => ({
+        id, name, creationDate, area, price, balcony,
+        timeToMetroOnFoot, numberOfRooms, furnish, view, transport
+    }), []);
 
-    const [flatsLoading, setFlatsLoading] = useState(false); // Загрузка всего списка
-    const [tableLoading, setTableLoading] = useState(false); // Операция над строкой (удаление)
-
-    // Состояния для модалки и дозагрузки данных
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [modalLoading, setModalLoading] = useState(false);
-    const [selectedFlatFullData, setSelectedFlatFullData] = useState(null);
-
-    useEffect(() => {
-        const fetchFlatData = async () => {
-            setFlatsLoading(true);
-            try {
-                const response = await api.get('/flat/all');
-                const shortFlats = response.data.map(({ id, name, price, area }) => ({
-                    id,
-                    name,
-                    price,
-                    area
-                }));
-                setFlats(shortFlats);
-
-            } catch (error) {
-                message.error('Ошибка при загрузке списка квартир');
-            }
-            finally {
-                setFlatsLoading(false);
-            }
-        };
-
-        fetchFlatData();
-    }, []);
-
-    const handleEditClick = async (flatId) => {
-        setIsEditModalOpen(true);
-        setModalLoading(true);
-
-        try {
-            const response = await api.get(`/flat/${flatId}`);
-            setSelectedFlatFullData(response.data); // Записываем данные
-        } catch (error) {
-            message.error("Ошибка получения данных квартиры");
-            setIsEditModalOpen(false);
-        } finally {
-            setModalLoading(false);
-        }
-    };
-
-
-    const handleDeleteClick = async (flatId) =>{
-        setTableLoading(true);
-        try {
-            const response = await api.delete(`/flat/${flatId}`);
-            if (response.status.valueOf() === 204){
-                setFlats((prevFlats) => prevFlats.filter((flat) => flat.id !== flatId));
-                message.success("Квартира успешно удалена из списка");
-            }else{
-                message.error("Ошибка получения данных квартиры");
-            }
-
-        } catch (error) {
-            message.error("Ошибка получения данных квартиры");
-        } finally {
-            setTableLoading(false);
-        }
-    };
-
-    const handleFormSubmit = (updatedPayload) => {
-        setModalLoading(true);
-
-        setTimeout(() => {
-            setFlats((prevFlats) =>
-                prevFlats.map((flat) =>
-                    flat.id === selectedFlatFullData.id
-                        ? { ...flat, ...updatedPayload }
-                        : flat
-                )
-            );
-
-            setModalLoading(false);
-            setIsEditModalOpen(false);
-            setSelectedFlatFullData(null);
-            message.success('Квартира успешно обновлена!');
-        }, 500);
-    };
-
-    const handleCloseModal = () => {
-        setIsEditModalOpen(false);
-        setSelectedFlatFullData(null);
-    };
-
+    const {
+        data: flats,
+        loading,
+        actionLoading,
+        currentPage,
+        pageSize,
+        totalElements,
+        isModalOpen,
+        isCreateMode,
+        modalLoading,
+        selectedFullData,
+        tableParams,
+        handleTableChange,
+        handlePageChange,
+        handleCreateClick,
+        handleEditClick,
+        handleDeleteClick,
+        handleFormSubmit,
+        handleCloseModal,
+        changeEndpoint,
+        handleResetFilters,
+    } = useEntityTable({
+        baseUrl: '/flat',
+        mapper: flatMapper,
+        entityName: 'flat'
+    });
 
     return (
         <div>
-            <FlatsHeader></FlatsHeader>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h2>Список квартир</h2>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button
+                        icon={<ClearOutlined />}
+                        onClick={handleResetFilters}
+                    >
+                        Сбросить фильтры
+                    </Button>
+
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleCreateClick}
+                    >
+                        Добавить квартиру
+                    </Button>
+                </div>
+            </div>
+
             <FlatsTable
                 flats={flats}
-                loading={flatsLoading || tableLoading}
+                loading={loading || actionLoading}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalElements={totalElements}
+                onPageChange={handlePageChange}
+                onTableChange={handleTableChange}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
+                tableParams={tableParams}
             />
 
             <UpdateFlatModal
-                open={isEditModalOpen}
+                open={isModalOpen}
                 onClose={handleCloseModal}
-                initialData={selectedFlatFullData} // Передаем полные загруженные данные
+                initialData={selectedFullData}
                 onSubmit={handleFormSubmit}
-                loading={modalLoading} // Передаем состояние загрузки в модалку
+                loading={modalLoading}
+                title={isCreateMode ? "Добавление квартиры" : "Редактирование квартиры"}
             />
         </div>
     );
